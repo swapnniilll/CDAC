@@ -1,0 +1,270 @@
+3) Problem Statement: Ride Sharing System
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+// Ride Class
+class Ride {
+    private static int counter = 1;
+    private int rideId;
+    private int userId;
+    private int driverId;
+    private String source;
+    private String destination;
+    private double fare;
+    private String status;
+    public Ride(int userId, int driverId, String source, String destination, double fare) {
+        this.rideId = counter++;
+        this.userId = userId;
+        this.driverId = driverId;
+        this.source = source;
+        this.destination = destination;
+        this.fare = fare;
+        this.status = "BOOK";
+    }
+    public int getRideId() { return rideId; }
+    public int getUserId() { return userId; }
+    public int getDriverId() { return driverId; }
+    public double getFare() { return fare; }
+    public String getStatus() { return status; }
+
+    public void cancelRide() {
+        this.status = "CANCEL";
+    }
+
+    public void display() {
+        System.out.println("Ride ID: " + rideId +
+                ", User ID: " + userId +
+                ", Driver ID: " + driverId +
+                ", From: " + source +
+                ", To: " + destination +
+                ", Fare: " + fare +
+                ", Status: " + status);
+    }
+}
+
+// New User Class 
+class User {
+    private int userId;
+    private String name;
+    private List<Ride> rides;
+
+    public User(int userId, String name) {
+        this.userId = userId;
+        this.name = name;
+        rides = new ArrayList<>();
+    }
+
+    public int getUserId() { return userId; }
+
+    public void addRide(Ride r) {
+        rides.add(r);
+    }
+
+    public void removeRide(int rideId) {
+        rides.removeIf(r -> r.getRideId() == rideId);
+    }
+
+    public void displayRides() {
+        if (rides.isEmpty()) {
+            System.out.println("No rides found.");
+            return;
+        }
+        for (Ride r : rides) {
+            r.display();
+        }
+    }
+
+    public double calculateBill() {
+        double total = 0;
+        for (Ride r : rides) {
+            if (r.getStatus().equals("BOOK")) {
+                total += r.getFare();
+            }
+        }
+        return total;
+    }
+}
+
+// Driver Class
+class Driver {
+    private int driverId;
+    private String name;
+    private List<Ride> rides;
+
+    public Driver(int driverId, String name) {
+        this.driverId = driverId;
+        this.name = name;
+        rides = new ArrayList<>();
+    }
+
+    public int getDriverId() { return driverId; }
+
+    public void addRide(Ride r) {
+        rides.add(r);
+    }
+
+    public void removeRide(int rideId) {
+        rides.removeIf(r -> r.getRideId() == rideId);
+    }
+}
+
+// System Class
+class RideSharingSystem {
+    private Map<Integer, User> users = new HashMap<>();
+    private Map<Integer, Driver> drivers = new HashMap<>();
+    private Map<Integer, Ride> rides = new HashMap<>();
+
+    public void addUser(int id, String name) {
+        users.put(id, new User(id, name));
+        System.out.println("User added!");
+    }
+
+    public void addDriver(int id, String name) {
+        drivers.put(id, new Driver(id, name));
+        System.out.println("Driver added!");
+    }
+
+    public void bookRide(int userId, int driverId, String src, String dest, double fare) {
+        User u = users.get(userId);
+        Driver d = drivers.get(driverId);
+
+        if (u == null || d == null) {
+            System.out.println("Invalid User or Driver ID!");
+            return;
+        }
+
+        Ride r = new Ride(userId, driverId, src, dest, fare);
+        rides.put(r.getRideId(), r);
+
+        u.addRide(r);
+        d.addRide(r);
+
+        System.out.println("Ride booked! Ride ID: " + r.getRideId());
+    }
+
+    public void cancelRide(int userId, int rideId) {
+        Ride r = rides.get(rideId);
+        User u = users.get(userId);
+
+        if (r == null || u == null) {
+            System.out.println("Invalid IDs!");
+            return;
+        }
+
+        r.cancelRide();
+        u.removeRide(rideId);
+
+        Driver d = drivers.get(r.getDriverId());
+        if (d != null) {
+            d.removeRide(rideId);
+        }
+
+        rides.remove(rideId);
+        System.out.println("Ride cancelled!");
+    }
+
+    public void viewUserRides(int userId) {
+        User u = users.get(userId);
+        if (u != null) {
+            u.displayRides();
+        } else {
+            System.out.println("User not found!");
+        }
+    }
+
+    public void calculateBill(int userId) {
+        User u = users.get(userId);
+        if (u != null) {
+            System.out.println("Total Bill: " + u.calculateBill());
+        } else {
+            System.out.println("User not found!");
+        }
+    }
+}
+
+// Main Class
+public class RideSharingApp {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        RideSharingSystem system = new RideSharingSystem();
+
+        while (true) {
+            System.out.println("\n===== Ride Sharing System =====");
+            System.out.println("1. Add User");
+            System.out.println("2. Add Driver");
+            System.out.println("3. Book Ride");
+            System.out.println("4. Cancel Ride");
+            System.out.println("5. View User Rides");
+            System.out.println("6. Calculate Bill");
+            System.out.println("7. Exit");
+
+            System.out.print("Enter choice: ");
+            int choice = sc.nextInt();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter User ID: ");
+                    int uid = sc.nextInt();
+                    sc.nextLine();
+                    System.out.print("Enter Name: ");
+                    String uname = sc.nextLine();
+                    system.addUser(uid, uname);
+                    break;
+
+                case 2:
+                    System.out.print("Enter Driver ID: ");
+                    int did = sc.nextInt();
+                    sc.nextLine();
+                    System.out.print("Enter Name: ");
+                    String dname = sc.nextLine();
+                    system.addDriver(did, dname);
+                    break;
+
+                case 3:
+                    System.out.print("Enter User ID: ");
+                    int uId = sc.nextInt();
+                    System.out.print("Enter Driver ID: ");
+                    int dId = sc.nextInt();
+                    sc.nextLine();
+                    System.out.print("Enter Source: ");
+                    String src = sc.nextLine();
+                    System.out.print("Enter Destination: ");
+                    String dest = sc.nextLine();
+                    System.out.print("Enter Fare: ");
+                    double fare = sc.nextDouble();
+
+                    system.bookRide(uId, dId, src, dest, fare);
+                    break;
+
+                case 4:
+                    System.out.print("Enter User ID: ");
+                    int userId = sc.nextInt();
+                    System.out.print("Enter Ride ID: ");
+                    int rideId = sc.nextInt();
+                    system.cancelRide(userId, rideId);
+                    break;
+
+                case 5:
+                    System.out.print("Enter User ID: ");
+                    int viewId = sc.nextInt();
+                    system.viewUserRides(viewId);
+                    break;
+
+                case 6:
+                    System.out.print("Enter User ID: ");
+                    int billId = sc.nextInt();
+                    system.calculateBill(billId);
+                    break;
+
+                case 7:
+                    System.out.println("Exiting...");
+                    return;
+
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
+    }
+}
