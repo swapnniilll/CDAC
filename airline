@@ -1,0 +1,175 @@
+2) Problem Statement: Airline TicketBooking System
+
+import java.util.*;
+
+// Passenger Class
+class Passenger {
+    private int id;
+    private String name;
+    private int seatNumber;
+
+    public Passenger(int id, String name, int seatNumber) {
+        this.id = id;
+        this.name = name;
+        this.seatNumber = seatNumber;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getSeatNumber() {
+        return seatNumber;
+    }
+
+    public void display() {
+        System.out.println("ID: " + id + ", Name: " + name + ", Seat No: " + seatNumber);
+    }
+}
+
+// Flight Class
+class Flight {
+    protected String flightNumber;
+    protected String source;
+    protected String destination;
+    protected List<Passenger> passengers;
+
+    public Flight(String flightNumber, String source, String destination) {
+        this.flightNumber = flightNumber;
+        this.source = source;
+        this.destination = destination;
+        passengers = new ArrayList<>();
+    }
+
+    // Add Passenger
+    public void addPassenger(Passenger p) {
+        for (Passenger existing : passengers) {
+            if (existing.getSeatNumber() == p.getSeatNumber()) {
+                System.out.println("Seat already booked!");
+                return;
+            }
+        }
+        passengers.add(p);
+        System.out.println("Passenger added successfully!");
+    }
+
+    // Remove Passenger by ID
+    public void removePassenger(int id) {
+        Iterator<Passenger> it = passengers.iterator();
+        while (it.hasNext()) {
+            Passenger p = it.next();
+            if (p.getId() == id) {
+                it.remove();
+                System.out.println("Passenger removed successfully!");
+                return;
+            }
+        }
+        System.out.println("Passenger not found!");
+    }
+
+    // Search Passenger by Seat Number
+    public void searchPassenger(int seatNo) {
+        for (Passenger p : passengers) {
+            if (p.getSeatNumber() == seatNo) {
+                System.out.println("Passenger Found:");
+                p.display();
+                return;
+            }
+        }
+        System.out.println("Passenger not found!");
+    }
+
+    // Display All Passengers
+    public void displayPassengers() {
+        if (passengers.isEmpty()) {
+            System.out.println("No passengers booked.");
+            return;
+        }
+
+        System.out.println("\nFlight: " + flightNumber + " (" + source + " → " + destination + ")");
+        for (Passenger p : passengers) {
+            p.display();
+        }
+    }
+}
+
+// BusinessFlight Class (Inheritance)
+class BusinessFlight extends Flight {
+    private boolean bagAccess;
+
+    public BusinessFlight(String flightNumber, String source, String destination, boolean bagAccess) {
+        super(flightNumber, source, destination);
+        this.bagAccess = bagAccess;
+    }
+
+    @Override
+    public void displayPassengers() {
+        System.out.println("\nBusiness Flight: " + flightNumber);
+        System.out.println("Route: " + source + " → " + destination);
+        System.out.println("Extra Baggage Access: " + (bagAccess ? "Yes" : "No"));
+        super.displayPassengers();
+    }
+}
+
+// Main Class (Menu Driven)
+public class AirlineSystem {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Create a Business Flight
+        BusinessFlight flight = new BusinessFlight("AI101", "Mumbai", "Delhi", true);
+
+        while (true) {
+            System.out.println("\n===== Airline Ticket Booking System =====");
+            System.out.println("1. ADD Passenger");
+            System.out.println("2. REMOVE Passenger");
+            System.out.println("3. SEARCH Passenger");
+            System.out.println("4. DISPLAY All Passengers");
+            System.out.println("5. EXIT");
+
+            System.out.print("Enter choice: ");
+            int choice = sc.nextInt();
+
+            switch (choice) {
+
+                case 1:
+                    System.out.print("Enter ID: ");
+                    int id = sc.nextInt();
+                    sc.nextLine();
+
+                    System.out.print("Enter Name: ");
+                    String name = sc.nextLine();
+
+                    System.out.print("Enter Seat Number: ");
+                    int seat = sc.nextInt();
+
+                    Passenger p = new Passenger(id, name, seat);
+                    flight.addPassenger(p);
+                    break;
+
+                case 2:
+                    System.out.print("Enter Passenger ID to remove: ");
+                    int removeId = sc.nextInt();
+                    flight.removePassenger(removeId);
+                    break;
+
+                case 3:
+                    System.out.print("Enter Seat Number to search: ");
+                    int seatNo = sc.nextInt();
+                    flight.searchPassenger(seatNo);
+                    break;
+
+                case 4:
+                    flight.displayPassengers();
+                    break;
+
+                case 5:
+                    System.out.println("Exiting...");
+                    return;
+
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
+    }
+}
