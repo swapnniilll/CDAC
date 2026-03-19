@@ -1,0 +1,275 @@
+4) Problem Statement: Shop Management System
+
+import java.util.*;
+import java.time.LocalDate;
+
+// Custom Exceptions
+class ProductNotFoundException extends Exception {
+    public ProductNotFoundException(String msg) {
+        super(msg);
+    }
+}
+
+class CustomerNotFoundException extends Exception {
+    public CustomerNotFoundException(String msg) {
+        super(msg);
+    }
+}
+
+class InsufficientQuantityException extends Exception {
+    public InsufficientQuantityException(String msg) {
+        super(msg);
+    }
+}
+
+// Product Class
+class Product {
+    private int productId;
+    private String name;
+    private int quantity;
+    private double price;
+
+    public Product(int productId, String name, int quantity, double price) {
+        this.productId = productId;
+        this.name = name;
+        this.quantity = quantity;
+        this.price = price;
+    }
+
+    public int getProductId() { return productId; }
+    public int getQuantity() { return quantity; }
+    public double getPrice() { return price; }
+
+    public void reduceQuantity(int qty) throws InsufficientQuantityException {
+        if (qty > quantity) {
+            throw new InsufficientQuantityException("Not enough stock!");
+        }
+        quantity -= qty;
+    }
+
+    public void increaseQuantity(int qty) {
+        quantity += qty;
+    }
+
+    public void display() {
+        System.out.println("ID: " + productId + ", Name: " + name +
+                ", Qty: " + quantity + ", Price: " + price);
+    }
+}
+
+// Customer Class
+class Customer {
+    private int customerId;
+    private String name;
+
+    public Customer(int customerId, String name) {
+        this.customerId = customerId;
+        this.name = name;
+    }
+
+    public int getCustomerId() { return customerId; }
+
+    public void display() {
+        System.out.println("Customer ID: " + customerId + ", Name: " + name);
+    }
+}
+
+// Transaction Record Class
+class TransactionRecord {
+    private int customerId;
+    private int productId;
+    private String type;
+    private LocalDate date;
+
+    public TransactionRecord(int customerId, int productId, String type) {
+        this.customerId = customerId;
+        this.productId = productId;
+        this.type = type;
+        this.date = LocalDate.now();
+    }
+
+    public void display() {
+        System.out.println("Customer ID: " + customerId +
+                ", Product ID: " + productId +
+                ", Type: " + type +
+                ", Date: " + date);
+    }
+}
+
+// Transaction Class
+class Transaction {
+    private List<TransactionRecord> records = new ArrayList<>();
+
+    public void addRecord(TransactionRecord tr) {
+        records.add(tr);
+    }
+
+    public void displayAll() {
+        if (records.isEmpty()) {
+            System.out.println("No transactions found.");
+            return;
+        }
+        for (TransactionRecord tr : records) {
+            tr.display();
+        }
+    }
+}
+
+// Shop Class
+class Shop {
+    private HashMap<Integer, Product> products = new HashMap<>();
+    private HashMap<Integer, Customer> customers = new HashMap<>();
+    private Transaction transaction = new Transaction();
+
+    public void addProduct(Product p) {
+        products.put(p.getProductId(), p);
+        System.out.println("Product added!");
+    }
+
+    public void addCustomer(Customer c) {
+        customers.put(c.getCustomerId(), c);
+        System.out.println("Customer added!");
+    }
+
+    public void displayProducts() {
+        for (Product p : products.values()) {
+            p.display();
+        }
+    }
+
+    public void displayCustomers() {
+        for (Customer c : customers.values()) {
+            c.display();
+        }
+    }
+
+    public void recordSale(int custId, int prodId, int qty)
+            throws ProductNotFoundException, CustomerNotFoundException, InsufficientQuantityException {
+
+        if (!products.containsKey(prodId))
+            throw new ProductNotFoundException("Product not found!");
+
+        if (!customers.containsKey(custId))
+            throw new CustomerNotFoundException("Customer not found!");
+
+        Product p = products.get(prodId);
+        p.reduceQuantity(qty);
+
+        transaction.addRecord(new TransactionRecord(custId, prodId, "SALE"));
+        System.out.println("Sale recorded!");
+    }
+
+    public void recordReturn(int custId, int prodId, int qty)
+            throws ProductNotFoundException, CustomerNotFoundException {
+
+        if (!products.containsKey(prodId))
+            throw new ProductNotFoundException("Product not found!");
+
+        if (!customers.containsKey(custId))
+            throw new CustomerNotFoundException("Customer not found!");
+
+        Product p = products.get(prodId);
+        p.increaseQuantity(qty);
+
+        transaction.addRecord(new TransactionRecord(custId, prodId, "RETURN"));
+        System.out.println("Return recorded!");
+    }
+
+    public void displayTransactions() {
+        transaction.displayAll();
+    }
+}
+
+// Renamed Main Class
+public class ShopSystemApp {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Shop shop = new Shop();
+
+        while (true) {
+            System.out.println("\n===== Shop Management System =====");
+            System.out.println("1. Add Product");
+            System.out.println("2. Add Customer");
+            System.out.println("3. Display Products");
+            System.out.println("4. Display Customers");
+            System.out.println("5. Record Sale");
+            System.out.println("6. Record Return");
+            System.out.println("7. View Transactions");
+            System.out.println("8. Exit");
+
+            System.out.print("Enter choice: ");
+            int choice = sc.nextInt();
+
+            try {
+                switch (choice) {
+                    case 1:
+                        System.out.print("Enter Product ID: ");
+                        int pid = sc.nextInt();
+                        sc.nextLine();
+                        System.out.print("Enter Name: ");
+                        String pname = sc.nextLine();
+                        System.out.print("Enter Quantity: ");
+                        int qty = sc.nextInt();
+                        System.out.print("Enter Price: ");
+                        double price = sc.nextDouble();
+
+                        shop.addProduct(new Product(pid, pname, qty, price));
+                        break;
+
+                    case 2:
+                        System.out.print("Enter Customer ID: ");
+                        int cid = sc.nextInt();
+                        sc.nextLine();
+                        System.out.print("Enter Name: ");
+                        String cname = sc.nextLine();
+
+                        shop.addCustomer(new Customer(cid, cname));
+                        break;
+
+                    case 3:
+                        shop.displayProducts();
+                        break;
+
+                    case 4:
+                        shop.displayCustomers();
+                        break;
+
+                    case 5:
+                        System.out.print("Enter Customer ID: ");
+                        int c1 = sc.nextInt();
+                        System.out.print("Enter Product ID: ");
+                        int p1 = sc.nextInt();
+                        System.out.print("Enter Quantity: ");
+                        int q1 = sc.nextInt();
+
+                        shop.recordSale(c1, p1, q1);
+                        break;
+
+                    case 6:
+                        System.out.print("Enter Customer ID: ");
+                        int c2 = sc.nextInt();
+                        System.out.print("Enter Product ID: ");
+                        int p2 = sc.nextInt();
+                        System.out.print("Enter Quantity: ");
+                        int q2 = sc.nextInt();
+
+                        shop.recordReturn(c2, p2, q2);
+                        break;
+
+                    case 7:
+                        shop.displayTransactions();
+                        break;
+
+                    case 8:
+                        System.out.println("Exiting...");
+                        return;
+
+                    default:
+                        System.out.println("Invalid choice!");
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }
+}
