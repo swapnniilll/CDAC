@@ -1,0 +1,281 @@
+5) Problem Statement: Hospital Management System
+
+import java.util.*;
+import java.io.*;
+
+// Custom Exceptions
+class DoctorNotFoundException extends Exception {
+    public DoctorNotFoundException(String msg) { super(msg); }
+}
+
+class PatientNotFoundException extends Exception {
+    public PatientNotFoundException(String msg) { super(msg); }
+}
+
+class DoctorUnavailableException extends Exception {
+    public DoctorUnavailableException(String msg) { super(msg); }
+}
+
+// Patient Class
+class Patient {
+    private int patientId;
+    private String name;
+
+    public Patient(int patientId, String name) {
+        this.patientId = patientId;
+        this.name = name;
+    }
+
+    public int getPatientId() { return patientId; }
+
+    public void display() {
+        System.out.println("Patient ID: " + patientId + ", Name: " + name);
+    }
+}
+
+// Doctor Class
+class Doctor {
+    private int doctorId;
+    private String name;
+    private boolean available;
+
+    public Doctor(int doctorId, String name) {
+        this.doctorId = doctorId;
+        this.name = name;
+        this.available = true;
+    }
+
+    public int getDoctorId() { return doctorId; }
+    public boolean isAvailable() { return available; }
+
+    public void setAvailable(boolean status) {
+        available = status;
+    }
+
+    public void display() {
+        System.out.println("Doctor ID: " + doctorId + ", Name: " + name +
+                ", Available: " + (available ? "Yes" : "No"));
+    }
+}
+
+// Appointment Record
+class AppointmentRecord {
+    private int patientId;
+    private int doctorId;
+    private String status;
+
+    public AppointmentRecord(int patientId, int doctorId, String status) {
+        this.patientId = patientId;
+        this.doctorId = doctorId;
+        this.status = status;
+    }
+
+    public int getPatientId() { return patientId; }
+    public int getDoctorId() { return doctorId; }
+
+    public void display() {
+        System.out.println("Patient ID: " + patientId +
+                ", Doctor ID: " + doctorId +
+                ", Status: " + status);
+    }
+
+    public String toString() {
+        return "Patient ID: " + patientId + ", Doctor ID: " + doctorId + ", Status: " + status;
+    }
+}
+
+// Appointment Class (Has-A relationship)
+class Appointment {
+    private List<AppointmentRecord> records = new ArrayList<>();
+
+    public void addAppointment(AppointmentRecord ar) {
+        records.add(ar);
+        logToFile(ar);
+    }
+
+    public void cancelAppointment(int patientId, int doctorId) {
+        records.removeIf(r -> r.getPatientId() == patientId && r.getDoctorId() == doctorId);
+    }
+
+    public void displayByDoctor(int doctorId) {
+        for (AppointmentRecord r : records) {
+            if (r.getDoctorId() == doctorId) {
+                r.display();
+            }
+        }
+    }
+
+    public void displayByPatient(int patientId) {
+        for (AppointmentRecord r : records) {
+            if (r.getPatientId() == patientId) {
+                r.display();
+            }
+        }
+    }
+
+    // File Logging
+    private void logToFile(AppointmentRecord ar) {
+        try (FileWriter fw = new FileWriter("appointments.txt", true)) {
+            fw.write(ar.toString() + "\n");
+        } catch (IOException e) {
+            System.out.println("File Error!");
+        }
+    }
+}
+
+// Hospital Class
+class Hospital {
+    private HashMap<Integer, Doctor> doctors = new HashMap<>();
+    private HashMap<Integer, Patient> patients = new HashMap<>();
+    private Appointment appointment = new Appointment();
+
+    public void addDoctor(Doctor d) {
+        doctors.put(d.getDoctorId(), d);
+        System.out.println("Doctor added!");
+    }
+
+    public void addPatient(Patient p) {
+        patients.put(p.getPatientId(), p);
+        System.out.println("Patient added!");
+    }
+
+    public void displayDoctors() {
+        for (Doctor d : doctors.values()) {
+            d.display();
+        }
+    }
+
+    public void displayPatients() {
+        for (Patient p : patients.values()) {
+            p.display();
+        }
+    }
+
+    public void scheduleAppointment(int patientId, int doctorId)
+            throws DoctorNotFoundException, PatientNotFoundException, DoctorUnavailableException {
+
+        if (!doctors.containsKey(doctorId))
+            throw new DoctorNotFoundException("Doctor not found!");
+
+        if (!patients.containsKey(patientId))
+            throw new PatientNotFoundException("Patient not found!");
+
+        Doctor d = doctors.get(doctorId);
+
+        if (!d.isAvailable())
+            throw new DoctorUnavailableException("Doctor not available!");
+
+        d.setAvailable(false);
+        appointment.addAppointment(new AppointmentRecord(patientId, doctorId, "BOOKED"));
+
+        System.out.println("Appointment scheduled!");
+    }
+
+    public void cancelAppointment(int patientId, int doctorId) {
+        Doctor d = doctors.get(doctorId);
+        if (d != null) {
+            d.setAvailable(true);
+        }
+        appointment.cancelAppointment(patientId, doctorId);
+        System.out.println("Appointment cancelled!");
+    }
+
+    public void displayAppointmentsByDoctor(int doctorId) {
+        appointment.displayByDoctor(doctorId);
+    }
+
+    public void displayAppointmentsByPatient(int patientId) {
+        appointment.displayByPatient(patientId);
+    }
+}
+
+// Main Class
+public class HospitalManagementSystem {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Hospital hospital = new Hospital();
+
+        while (true) {
+            System.out.println("\n===== Hospital Management System =====");
+            System.out.println("1. Add Doctor");
+            System.out.println("2. Add Patient");
+            System.out.println("3. Display Doctors");
+            System.out.println("4. Display Patients");
+            System.out.println("5. Schedule Appointment");
+            System.out.println("6. Cancel Appointment");
+            System.out.println("7. View Appointments by Doctor");
+            System.out.println("8. View Appointments by Patient");
+            System.out.println("9. Exit");
+
+            System.out.print("Enter choice: ");
+            int choice = sc.nextInt();
+
+            try {
+                switch (choice) {
+                    case 1:
+                        System.out.print("Enter Doctor ID: ");
+                        int did = sc.nextInt();
+                        sc.nextLine();
+                        System.out.print("Enter Name: ");
+                        String dname = sc.nextLine();
+                        hospital.addDoctor(new Doctor(did, dname));
+                        break;
+
+                    case 2:
+                        System.out.print("Enter Patient ID: ");
+                        int pid = sc.nextInt();
+                        sc.nextLine();
+                        System.out.print("Enter Name: ");
+                        String pname = sc.nextLine();
+                        hospital.addPatient(new Patient(pid, pname));
+                        break;
+
+                    case 3:
+                        hospital.displayDoctors();
+                        break;
+
+                    case 4:
+                        hospital.displayPatients();
+                        break;
+
+                    case 5:
+                        System.out.print("Enter Patient ID: ");
+                        int p1 = sc.nextInt();
+                        System.out.print("Enter Doctor ID: ");
+                        int d1 = sc.nextInt();
+                        hospital.scheduleAppointment(p1, d1);
+                        break;
+
+                    case 6:
+                        System.out.print("Enter Patient ID: ");
+                        int p2 = sc.nextInt();
+                        System.out.print("Enter Doctor ID: ");
+                        int d2 = sc.nextInt();
+                        hospital.cancelAppointment(p2, d2);
+                        break;
+
+                    case 7:
+                        System.out.print("Enter Doctor ID: ");
+                        int d3 = sc.nextInt();
+                        hospital.displayAppointmentsByDoctor(d3);
+                        break;
+
+                    case 8:
+                        System.out.print("Enter Patient ID: ");
+                        int p3 = sc.nextInt();
+                        hospital.displayAppointmentsByPatient(p3);
+                        break;
+
+                    case 9:
+                        System.out.println("Exiting...");
+                        return;
+
+                    default:
+                        System.out.println("Invalid choice!");
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }
+}
